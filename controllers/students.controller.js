@@ -1,5 +1,6 @@
 const fs = require("fs");
 const studentController = {};
+const crypto = require("crypto");
 
 
 
@@ -39,35 +40,44 @@ studentController.limitStudent = (req, res, next) => {
     
 
     // create new student document with name and age with unique id. HINT: utilize generateRandomHexString()
-//  studentController.createStudentHandler = (req,res,next) => {
-//         console.log("creating a student");
-//         const student = req.body.student;
-//         try {
-//             const jsonContent = JSON.stringify(student)
-//         } catch (error) {
-//            next(error) 
-//         }
-//     }
+ studentController.createStudentHandler = (req,res,next) => {
+        console.log("creating a student");
+        let newId = "";
+        const generateRandomHexString = (len) => {
+          return crypto
+            .randomBytes(Math.ceil(len / 2))
+            .toString("hex") 
+            .slice(0, len)
+            .toUpperCase(); 
+        };
+        newId = generateRandomHexString(10);
+        
+        const database = fs.readFileSync("db.json", "utf8");
+        const jsObject = JSON.parse(database);
+        const student = req.body;
+        student.id = newId;
+        console.log(student)
+        jsObject.push(student)
+        const jsonContent = JSON.stringify(jsObject)
+        fs.writeFileSync("db.json", jsonContent);
+        return res.status(200).send("sucess");
+
+    }
   
 // update student info {name, age}
 studentController.updateStudentInfo = (req, res, next) => {
     const { id } = req.params;
+    console.log(id)
     try {  
       const database = fs.readFileSync("db.json", "utf8");
       let jsObject = JSON.parse(database);
-      console.log(jsObject)
-    //   let newContent = req.body;
-    //     console.log("hey",newContent)
-    //   const database = fs.readFileSync("db.json", "utf8");
-    //   let jsObject = JSON.parse(database);
-    //   let result = jsObject.filter((e) => e.id == id);
-    //   console.log("hi",result)
-    //   result.push(newContent);
-    //   console.log("helo", newContent)
-    //   let JSONcontent = JSON.stringify(result);
-    //   fs.writeFileSync("db.json", JSONcontent);
-    //   const jsonFile = fs.readFileSync("db.json", "utf8");
-    //   const res = JSON.parse(jsonFile);
+      jsObject.forEach((item, index) => {
+        if(item.id === id) {
+          jsObject[index] = {...item, ...req.body}
+        }
+      })
+      let JSONcontent = JSON.stringify(jsObject);
+      fs.writeFileSync("db.json", JSONcontent);
       return res.status(200).send("success");
 
     } catch (error) {
@@ -76,8 +86,8 @@ studentController.updateStudentInfo = (req, res, next) => {
   };
   
 
-  //delete matching student it
-  studentController.deleteMatchId = (req, res, next) => {
+//delete matching student it
+studentController.deleteMatchId = (req, res, next) => {
     console.log("trying to delete");
     const { id } = req.params;
     
