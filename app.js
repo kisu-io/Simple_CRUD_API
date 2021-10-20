@@ -16,13 +16,18 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/api", indexRouter);
 
 app.use((req, res, next) => {
-  const error = new Error("Path not found");
+  const error = new Error("Url request invalid");
   error.statusCode = 404;
+  console.log(`error request url`, req.path);
   next(error);
 });
+
 app.use((err, req, res, next) => {
-  console.log("ERROR", err.message);
-  return res.send(err.message);
+  if (err.statusCode) {
+    return res.status(err.statusCode).send(err.message);
+  } else {
+    return res.status(500).send(err.message);
+  }
 });
 
 module.exports = app;
